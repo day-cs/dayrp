@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>อินโฟกราฟิก: การนำ AI มาปรับใช้งานด้านไอที</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 
+        Chosen Color Palette: Brilliant Blues
+        Primary: #007BFF (Blue)
+        Secondary: #00BFFF (Deep Sky Blue)
+        Accent1: #17A2B8 (Info Blue/Teal)
+        Accent2: #E0F7FA (Light Cyan/Background tint)
+        Text: #212529 (Dark Gray)
+        Background: #FFFFFF (White) / #F8F9FA (Light Gray)
+
+        Narrative Plan Summary:
+        1.  Introduction: The transformative power of AI in IT. Highlight key statistic (94% of leaders).
+        2.  AI Applications in IT: Showcase key areas like Software Development (GenAI impact), AIOps (Electrolux example), Cybersecurity, Network Management, Customer Support. Use various charts.
+        3.  Generative AI in SDLC: Illustrate the lifecycle impact with an HTML/CSS flow.
+        4.  Key Benefits of AI: Visual grid of benefits (Efficiency, Quality, Cost Reduction, Data-driven Decisions, Innovation, UX).
+        5.  Challenges of AI: Visual grid of challenges (Cost, Ethics, Limitations, Skills, Integration, UX).
+        6.  Future Trends: Cards for GenAI evolution, AI vs AI in Cybersecurity, Quantum Computing impact, AIOps development.
+        7.  Conclusion: Summary of AI's essential role.
+
+        Visualization Choices Summary (Data Point -> Goal -> Chosen Visualization -> Justification/Library/Method - Confirming NO SVG):
+        -   94% of leaders believe AI is essential -> Inform -> Donut Chart -> Clear visual for a key percentage / Chart.js (Canvas) - NO SVG
+        -   GenAI improves code quality by 25% -> Inform -> Big Number Stat -> Direct impact display / HTML Text - NO SVG
+        -   Electrolux AIOps time saving (3 weeks to 1 hour) -> Compare -> Bar Chart -> Shows clear comparison / Chart.js (Canvas) - NO SVG
+        -   AIOps Benefits (from Table 3, e.g., cost reduction, problem mitigation) -> Inform/Compare -> Multiple small Donut Charts or Bar Chart -> Highlights multiple benefits / Chart.js (Canvas) - NO SVG
+        -   Generative AI in SDLC stages -> Organize -> HTML/CSS Flow Chart -> Shows process flow / HTML+Tailwind - NO SVG
+        -   Key AI Benefits (Efficiency, Quality, etc.) -> Inform/Compare -> Icon-like text blocks in a grid -> Easy to scan multiple points / HTML+Tailwind with Unicode - NO SVG
+        -   AI Challenges (Cost, Ethics, etc.) -> Inform/Compare -> Icon-like text blocks in a grid -> Easy to scan multiple points / HTML+Tailwind with Unicode - NO SVG
+        -   Future Trends (GenAI, Cyber, Quantum) -> Inform -> Styled Cards -> Presents distinct future elements clearly / HTML+Tailwind - NO SVG
+        -   AI Applications Overview (Software Dev, AIOps, Cyber, Network, Data Analysis, Customer Support, EA/PA from Table 1) -> Inform -> Series of cards with brief text and potentially small illustrative charts (e.g. mini-bar for growth) / HTML+Tailwind, Chart.js (Canvas) - NO SVG
+
+        Confirmation: NEITHER Mermaid JS NOR SVG were used anywhere in this output. All diagrams are HTML/CSS based. All charts are Canvas-based via Chart.js.
+    -->
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #F8F9FA; /* Light Gray Background */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Default max-width */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height */
+            max-height: 400px; /* Max height */
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .kanit {
+            font-family: 'Kanit', sans-serif;
+        }
+        .stat-card {
+            background-color: #FFFFFF; /* White card background */
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+            padding: 1.5rem; /* p-6 */
+            margin-bottom: 1.5rem; /* mb-6 */
+            border-left: 5px solid #007BFF; /* Primary Blue Accent */
+        }
+        .section-title {
+            color: #007BFF; /* Primary Blue */
+            border-bottom: 2px solid #00BFFF; /* Secondary Blue */
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .flow-step {
+            background-color: #E0F7FA; /* Light Cyan/Background tint */
+            border: 1px solid #17A2B8; /* Info Blue/Teal */
+            color: #212529; /* Dark Gray Text */
+        }
+        .benefit-card, .challenge-card {
+            background-color: #FFFFFF;
+            border: 1px solid #00BFFF;
+            color: #212529;
+        }
+        .benefit-card .icon, .challenge-card .icon {
+            color: #007BFF;
+        }
+        .trend-card {
+            background-color: #17A2B8; /* Info Blue/Teal */
+            color: #FFFFFF;
+        }
+        .text-primary-blue { color: #007BFF; }
+        .text-secondary-blue { color: #00BFFF; }
+        .text-accent1-blue { color: #17A2B8; }
+        .bg-primary-blue { background-color: #007BFF; }
+        .bg-secondary-blue { background-color: #00BFFF; }
+        .bg-accent1-blue { background-color: #17A2B8; }
+        .bg-accent2-blue { background-color: #E0F7FA; }
+
+        /* Flowchart specific styles */
+        .flowchart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .flowchart-row {
+            display: flex;
+            justify-content: center;
+            align-items: stretch; /* Make items in a row same height */
+            gap: 1rem;
+            width: 100%;
+        }
+        .flowchart-item {
+            background-color: #E0F7FA;
+            border: 2px solid #007BFF;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            color: #212529;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 100px; /* Ensure items have some height */
+        }
+        .flowchart-arrow {
+            font-size: 2rem;
+            color: #007BFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 0.5rem;
+        }
+         /* Vertical arrow for column layout */
+        .flowchart-container.vertical .flowchart-arrow {
+            transform: rotate(90deg);
+            margin: 0.5rem 0;
+        }
+        /* Adjust for smaller screens */
+        @media (max-width: 768px) {
+            .flowchart-row {
+                flex-direction: column;
+                align-items: center;
+            }
+            .flowchart-arrow {
+                transform: rotate(90deg); /* Vertical arrow for stacked items */
+                margin: 0.5rem 0;
+            }
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007BFF;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body class="kanit bg-gray-100 text-gray-800">
+
+    <header class="bg-primary-blue text-white p-6 shadow-lg">
+        <div class="container mx-auto text-center">
+            <h1 class="text-4xl font-bold">การนำปัญญาประดิษฐ์ (AI) มาปรับใช้งานด้านเทคโนโลยีสารสนเทศ</h1>
+            <p class="text-lg mt-2">ภาพรวมแนวโน้ม ผลกระทบ และโอกาสจากรายงานการวิจัยเชิงลึก</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold section-title">1. AI: หัวใจสำคัญของการพลิกโฉม IT</h2>
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="stat-card">
+                    <p class="text-lg leading-relaxed">
+                        ปัญญาประดิษฐ์ (AI) ได้กลายเป็นเครื่องมือที่จำเป็นซึ่งกำลังกำหนดทิศทางการดำเนินงานและการพัฒนาในอุตสาหกรรมเทคโนโลยีสารสนเทศ (IT) ความสามารถในการเรียนรู้, แก้ปัญหา, และประมวลผลข้อมูลมหาศาล ทำให้ AI เป็นกุญแจสำคัญในการสร้างความได้เปรียบทางการแข่งขันและการเติบโตที่ยั่งยืน
+                        ความซับซ้อนของสถาปัตยกรรม IT สมัยใหม่และปริมาณข้อมูลที่เพิ่มขึ้นอย่างมหาศาล ทำให้ AI เป็นสิ่งจำเป็นเพื่อรักษาประสิทธิภาพและความน่าเชื่อถือ
+                    </p>
+                </div>
+                <div class="stat-card text-center">
+                    <h3 class="text-xl font-semibold text-primary-blue mb-2">ความเชื่อมั่นของผู้นำธุรกิจต่อ AI</h3>
+                    <div class="chart-container mx-auto" style="height: 250px; max-width: 250px;">
+                        <canvas id="necessityChart"></canvas>
+                    </div>
+                    <p class="mt-3 text-gray-700 text-sm">ที่มา: รายงานการวิจัย (อ้างอิง [2])</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold section-title">2. การประยุกต์ใช้ AI ในภาคส่วนไอที</h2>
+            <p class="text-lg mb-6 leading-relaxed">AI ถูกนำมาประยุกต์ใช้อย่างกว้างขวางในหลากหลายมิติของ IT เพื่อเพิ่มประสิทธิภาพ, ความปลอดภัย และนวัตกรรม:</p>
+            
+            <div class="grid md:grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="stat-card">
+                    <h3 class="text-xl font-semibold text-primary-blue mb-2">2.1 การพัฒนาซอฟต์แวร์และประกันคุณภาพ</h3>
+                    <p class="mb-2">Generative AI กำลังปฏิวัติวงการ SDLC ช่วยเร่งการพัฒนา ปรับปรุงคุณภาพโค้ด และลดต้นทุน</p>
+                    <div class="text-center my-4">
+                        <p class="text-4xl font-bold text-accent1-blue">สูงถึง 25%</p>
+                        <p class="text-gray-700">การปรับปรุงคุณภาพโค้ดโดย Generative AI (อ้างอิง [8])</p>
+                    </div>
+                    <p>AI ยังช่วยในการคาดการณ์ข้อผิดพลาดและทำให้การทดสอบเป็นอัตโนมัติ</p>
+                </div>
+
+                <div class="stat-card">
+                    <h3 class="text-xl font-semibold text-primary-blue mb-2">2.2 การบริหารจัดการโครงสร้างพื้นฐาน (AIOps)</h3>
+                    <p class="mb-2">AIOps ผสาน Big Data และ Machine Learning เพื่อทำให้การปฏิบัติการ IT เป็นอัตโนมัติ ระบุปัญหาเชิงรุก และบำรุงรักษาเชิงพยากรณ์</p>
+                    <p class="font-semibold mt-3 text-accent1-blue">ตัวอย่าง: Electrolux (อ้างอิง [2])</p>
+                    <ul class="list-disc list-inside text-gray-700">
+                        <li>ลดเวลาแก้ไขปัญหา IT จาก 3 สัปดาห์ เหลือ 1 ชั่วโมง</li>
+                        <li>ประหยัดเวลาได้มากกว่า 1,000 ชั่วโมงต่อปี</li>
+                    </ul>
+                     <div class="chart-container mx-auto mt-4" style="height:200px;">
+                        <canvas id="aiopsBenefitChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <h3 class="text-xl font-semibold text-primary-blue mb-2">2.3 ความปลอดภัยทางไซเบอร์</h3>
+                    <p class="mb-2">AI เพิ่มประสิทธิภาพการตรวจจับภัยคุกคาม, วิเคราะห์ข้อมูล, ระบุรูปแบบที่ผิดปกติ และตอบสนองต่อเหตุการณ์แบบเรียลไทม์ (อ้างอิง [6, 12])</p>
+                    <p class="font-semibold mt-3 text-accent1-blue">ความสามารถหลัก:</p>
+                    <ul class="list-disc list-inside text-gray-700">
+                        <li>การตรวจจับความผิดปกติและมัลแวร์</li>
+                        <li>การป้องกันการฉ้อโกง</li>
+                        <li>การจัดการข้อมูลประจำตัวและการเข้าถึง (IAM) อัจฉริยะ</li>
+                    </ul>
+                </div>
+
+                <div class="stat-card">
+                    <h3 class="text-xl font-semibold text-primary-blue mb-2">2.4 การจัดการเครือข่ายและการเพิ่มประสิทธิภาพ</h3>
+                    <p class="mb-2">AI วิเคราะห์ข้อมูลเครือข่ายแบบเรียลไทม์, คาดการณ์ข้อผิดพลาด, และเพิ่มประสิทธิภาพทรัพยากร (อ้างอิง [13, 14])</p>
+                    <p class="font-semibold mt-3 text-accent1-blue">ตัวอย่าง: Ericsson (อ้างอิง [17])</p>
+                    <p class="text-gray-700">การเพิ่มประสิทธิภาพด้วย AI ช่วยเพิ่มประสบการณ์ผู้ใช้ได้ถึง 15%</p>
+                </div>
+                
+                <div class="stat-card">
+                    <h3 class="text-xl font-semibold text-primary-blue mb-2">2.5 การวิเคราะห์ข้อมูลและระบบธุรกิจอัจฉริยะ</h3>
+                    <p class="mb-2">AI ประมวลผลข้อมูลมหาศาลเพื่อดึงข้อมูลเชิงลึก, คาดการณ์แนวโน้ม และสนับสนุนการตัดสินใจที่ขับเคลื่อนด้วยข้อมูล (อ้างอิง [1, 6])</p>
+                </div>
+
+                <div class="stat-card">
+                    <h3 class="text-xl font-semibold text-primary-blue mb-2">2.6 การสนับสนุนลูกค้าและการจัดการบริการ</h3>
+                    <p class="mb-2">แชทบอทและผู้ช่วยเสมือนที่ขับเคลื่อนด้วย AI ให้การสนับสนุน 24/7 และประสบการณ์ที่เป็นส่วนตัว (อ้างอิง [2, 6])</p>
+                    <p class="font-semibold mt-3 text-accent1-blue">ตัวอย่าง: Bouygues Telecom (อ้างอิง [2])</p>
+                    <p class="text-gray-700">ลดการดำเนินงานก่อนและหลังการโทรลง 30% ด้วย Generative AI</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold section-title">2.1 (ขยายความ) ผลกระทบของ Generative AI ในวงจรการพัฒนาซอฟต์แวร์ (SDLC)</h2>
+            <p class="text-lg mb-6 leading-relaxed">Generative AI มีบทบาทในทุกขั้นตอนของ SDLC ตั้งแต่การสร้างแนวคิดไปจนถึงการดำเนินงานและการสนับสนุน (อ้างอิง [8]):</p>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <div class="flowchart-container vertical md:hidden">
+                    <div class="flowchart-item"><strong>การสร้างแนวคิดและกำหนดข้อกำหนด</strong><p class="text-sm">ระบุความต้องการ, จัดลำดับความสำคัญ</p></div>
+                    <div class="flowchart-arrow">▼</div>
+                    <div class="flowchart-item"><strong>การออกแบบและการสร้างต้นแบบ</strong><p class="text-sm">เร่งการสร้างต้นแบบ, ออกแบบฟังก์ชัน</p></div>
+                    <div class="flowchart-arrow">▼</div>
+                    <div class="flowchart-item"><strong>การพัฒนาและการทดสอบ</strong><p class="text-sm">สร้างโค้ด, ทดสอบอัตโนมัติ, ตรวจสอบคุณภาพ</p></div>
+                     <div class="flowchart-arrow">▼</div>
+                    <div class="flowchart-item"><strong>การปรับใช้และเปิดใช้งานสภาพแวดล้อม</strong><p class="text-sm">เปิดใช้งานสภาพแวดล้อม, จัดการการปรับใช้</p></div>
+                    <div class="flowchart-arrow">▼</div>
+                    <div class="flowchart-item"><strong>การดำเนินงานและการสนับสนุน</strong><p class="text-sm">ตรวจสอบ, แก้ไขปัญหา, จัดการเหตุการณ์</p></div>
+                </div>
+
+                <div class="hidden md:block">
+                    <div class="flowchart-container">
+                        <div class="flowchart-row">
+                            <div class="flowchart-item"><strong>การสร้างแนวคิดและกำหนดข้อกำหนด</strong><p class="text-sm">ระบุความต้องการ, จัดลำดับความสำคัญ</p></div>
+                            <div class="flowchart-arrow hidden lg:flex">▶</div>
+                            <div class="flowchart-item"><strong>การออกแบบและการสร้างต้นแบบ</strong><p class="text-sm">เร่งการสร้างต้นแบบ, ออกแบบฟังก์ชัน</p></div>
+                        </div>
+                        <div class="flowchart-arrow lg:hidden">▼</div>
+                         <div class="flowchart-row  lg:my-4"> <div class="w-full lg:w-auto flex justify-center lg:hidden"><div class="flowchart-arrow">▼</div></div> </div>
+                        <div class="flowchart-row">
+                             <div class="flowchart-item"><strong>การพัฒนาและการทดสอบ</strong><p class="text-sm">สร้างโค้ด, ทดสอบอัตโนมัติ, ตรวจสอบคุณภาพ</p></div>
+                             <div class="flowchart-arrow hidden lg:flex">▶</div>
+                             <div class="flowchart-item"><strong>การปรับใช้และเปิดใช้งานสภาพแวดล้อม</strong><p class="text-sm">เปิดใช้งานสภาพแวดล้อม, จัดการการปรับใช้</p></div>
+                        </div>
+                         <div class="flowchart-arrow lg:hidden">▼</div>
+                         <div class="flowchart-row lg:my-4">
+                             <div class="w-full lg:w-auto flex justify-center lg:hidden"><div class="flowchart-arrow">▼</div></div>
+                         </div>
+                        <div class="flowchart-row">
+                            <div class="flowchart-item md:col-span-2 lg:col-span-1 lg:w-1/2 mx-auto"><strong>การดำเนินงานและการสนับสนุน</strong><p class="text-sm">ตรวจสอบ, แก้ไขปัญหา, จัดการเหตุการณ์</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold section-title">3. ประโยชน์หลักของการนำ AI มาใช้ในไอที</h2>
+            <p class="text-lg mb-6 leading-relaxed">การบูรณาการ AI นำมาซึ่งประโยชน์ที่สำคัญต่อองค์กร (อ้างอิง [2, 5, 7, 11, 20, 21]):</p>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="benefit-card p-6 rounded-lg shadow-md text-center">
+                    <div class="icon text-4xl mb-3">⚙️</div>
+                    <h3 class="text-xl font-semibold mb-2">เพิ่มประสิทธิภาพและผลิตภาพ</h3>
+                    <p>AI ทำงานประจำอัตโนมัติ ปลดปล่อยพนักงานสู่ภารกิจเชิงกลยุทธ์</p>
+                </div>
+                <div class="benefit-card p-6 rounded-lg shadow-md text-center">
+                    <div class="icon text-4xl mb-3">🛡️</div>
+                    <h3 class="text-xl font-semibold mb-2">ลดข้อผิดพลาดและเพิ่มคุณภาพ</h3>
+                    <p>AI ลดข้อผิดพลาดจากมนุษย์ ตรวจจับข้อบกพร่องแม่นยำ</p>
+                </div>
+                <div class="benefit-card p-6 rounded-lg shadow-md text-center">
+                    <div class="icon text-4xl mb-3">💰</div>
+                    <h3 class="text-xl font-semibold mb-2">ลดต้นทุนการดำเนินงาน</h3>
+                    <p>ลดค่าใช้จ่ายระยะยาวผ่านระบบอัตโนมัติและการเพิ่มประสิทธิภาพทรัพยากร</p>
+                </div>
+                <div class="benefit-card p-6 rounded-lg shadow-md text-center">
+                    <div class="icon text-4xl mb-3">📊</div>
+                    <h3 class="text-xl font-semibold mb-2">การตัดสินใจที่ขับเคลื่อนด้วยข้อมูล</h3>
+                    <p>AI ประมวลผลข้อมูลเรียลไทม์ คาดการณ์แนวโน้ม นำไปสู่การตัดสินใจที่ดีขึ้น</p>
+                </div>
+                <div class="benefit-card p-6 rounded-lg shadow-md text-center">
+                    <div class="icon text-4xl mb-3">💡</div>
+                    <h3 class="text-xl font-semibold mb-2">นวัตกรรมและความสามารถใหม่</h3>
+                    <p>AI เปิดโอกาสนวัตกรรม พัฒนาผลิตภัณฑ์/บริการใหม่ เพิ่มความได้เปรียบ</p>
+                </div>
+                <div class="benefit-card p-6 rounded-lg shadow-md text-center">
+                    <div class="icon text-4xl mb-3">😊</div>
+                    <h3 class="text-xl font-semibold mb-2">ปรับปรุงประสบการณ์ผู้ใช้/ลูกค้า</h3>
+                    <p>AI ปรับแต่งการโต้ตอบ ให้การสนับสนุน 24/7 ป้องกันการหยุดชะงักของบริการ</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold section-title">4. ความท้าทายและข้อควรพิจารณา</h2>
+            <p class="text-lg mb-6 leading-relaxed">แม้จะมีประโยชน์มากมาย การนำ AI มาใช้ยังเผชิญกับความท้าทายที่ต้องจัดการ (อ้างอิง [7, 13, 15, 20]):</p>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="challenge-card p-6 rounded-lg shadow-md text-center">
+                    <div class="icon text-4xl mb-3">💸</div>
+                    <h3 class="text-xl font-semibold mb-2">ต้นทุนเริ่มต้นและการลงทุน</h3>
+                    <p>การลงทุนในโครงสร้างพื้นฐาน, ซอฟต์แวร์, และการเตรียมข้อมูลอาจสูง</p>
+                </div>
+                <div class="challenge-card p-6 rounded-lg shadow-md text-center">
+                    <div class="icon text-4xl mb-3">⚖️</div>
+                    <h3 class="text-xl font-semibold mb-2">ข้อกังวลด้านจริยธรรมและความเป็นส่วนตัว</h3>
+                    <p>การรวบรวมและประมวลผลข้อมูลส่วนบุคคลต้องมีการกำกับดูแลที่เข้มงวด</p>
+                </div>
+                <div class="challenge-card p-6 rounded-lg shadow-md text-center">
+                    <div class="icon text-4xl mb-3">🧩</div>
+                    <h3 class="text-xl font-semibold mb-2">ข้อจำกัดของ AI และการกำกับดูแลของมนุษย์</h3>
+                    <p>AI ยังต้องการมนุษย์ในการตัดสินใจเชิงกลยุทธ์และสถานการณ์ที่ซับซ้อน</p>
+                </div>
+                <div class="challenge-card p-6 rounded-lg shadow-md text-center">
+                    <div class="icon text-4xl mb-3">🧑‍💻</div>
+                    <h3 class="text-xl font-semibold mb-2">ความต้องการบุคลากรที่มีทักษะ</h3>
+                    <p>ขาดแคลนผู้เชี่ยวชาญในการติดตั้ง ใช้งาน และบำรุงรักษาระบบ AI</p>
+                </div>
+                <div class="challenge-card p-6 rounded-lg shadow-md text-center">
+                    <div class="icon text-4xl mb-3">🔗</div>
+                    <h3 class="text-xl font-semibold mb-2">การบูรณาการและการพึ่งพาเทคโนโลยี</h3>
+                    <p>การรวม AI เข้ากับระบบเดิมมีความซับซ้อน และอาจนำไปสู่การพึ่งพามากเกินไป</p>
+                </div>
+                 <div class="challenge-card p-6 rounded-lg shadow-md text-center">
+                    <div class="icon text-4xl mb-3">😟</div>
+                    <h3 class="text-xl font-semibold mb-2">ความท้าทายด้านประสบการณ์ผู้ใช้</h3>
+                    <p>หาก AI ทำงานผิดพลาด อาจสร้างความไม่พอใจและลดความไว้วางใจ</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold section-title">5. แนวโน้มและอนาคตของ AI ในไอที</h2>
+            <p class="text-lg mb-6 leading-relaxed">ภูมิทัศน์ AI ใน IT กำลังพัฒนาอย่างต่อเนื่องด้วยแนวโน้มที่น่าจับตามอง:</p>
+            <div class="grid md:grid-cols-1 lg:grid-cols-2 gap-8" id="futureTrendsContent">
+                <div class="trend-card p-6 rounded-lg shadow-xl">
+                    <h3 class="text-2xl font-semibold mb-3">🤖 Generative AI ที่ทรงพลังยิ่งขึ้น</h3>
+                    <p>Generative AI จะยังคงปฏิวัติ SDLC และขยายความสามารถในการสร้างเนื้อหา สรุปข้อมูล และช่วยเหลืองานที่ซับซ้อนมากขึ้น (อ้างอิง [8])</p>
+                </div>
+                <div class="trend-card p-6 rounded-lg shadow-xl">
+                    <h3 class="text-2xl font-semibold mb-3">⚔️ สงคราม AI ในโลกไซเบอร์</h3>
+                    <p>ผู้โจมตีใช้ AI สร้างภัยคุกคามที่ซับซ้อน ขณะที่ฝ่ายป้องกันก็ต้องใช้ AI ที่ก้าวหน้ากว่าในการรับมือ คาดการณ์ "สงครามระหว่างเครื่องจักร" (อ้างอิง [22])</p>
+                </div>
+                <div class="trend-card p-6 rounded-lg shadow-xl">
+                    <h3 class="text-2xl font-semibold mb-3">⚛️ ผลกระทบจาก Quantum Computing</h3>
+                    <p>คอมพิวเตอร์ควอนตัมอาจทำให้การเข้ารหัสปัจจุบันล้าสมัย จำเป็นต้องมีการพัฒนาการเข้ารหัสที่ทนทานต่อควอนตัม (อ้างอิง [22])</p>
+                </div>
+                <div class="trend-card p-6 rounded-lg shadow-xl">
+                    <h3 class="text-2xl font-semibold mb-3">🌐 AIOps และเครือข่ายอัตโนมัติเต็มรูปแบบ</h3>
+                    <p>AIOps จะพัฒนาไปสู่ระบบเครือข่ายอัตโนมัติที่สามารถตรวจสอบ แก้ไขปัญหา และเพิ่มประสิทธิภาพตนเองโดยมีการแทรกแซงจากมนุษย์น้อยที่สุด (อ้างอิง [7, 14, 16])</p>
+                </div>
+            </div>
+            <div class="mt-8 text-center">
+                <button id="summarizeTrendsBtn" class="bg-primary-blue text-white px-6 py-3 rounded-lg shadow-md hover:bg-secondary-blue transition duration-300">
+                    ✨ สรุปแนวโน้มในอนาคต ✨
+                    <span id="summarizeLoading" class="loading-spinner hidden"></span>
+                </button>
+                <div id="summaryOutput" class="mt-4 p-4 bg-accent2-blue rounded-lg shadow-inner text-left text-gray-700 hidden"></div>
+            </div>
+        </section>
+        
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold section-title">6. ข้อเสนอแนะเชิงกลยุทธ์</h2>
+             <p class="text-lg mb-6 leading-relaxed">เพื่อให้การนำ AI มาปรับใช้ประสบความสำเร็จ องค์กรควรพิจารณา:</p>
+            <ul class="list-disc list-inside space-y-3 text-gray-700 bg-white p-6 rounded-lg shadow-md">
+                <li><strong class="text-primary-blue">การวางแผนเชิงกลยุทธ์:</strong> กำหนดกลยุทธ์ AI ที่สอดคล้องกับเป้าหมายธุรกิจ ประเมินความพร้อม</li>
+                <li><strong class="text-primary-blue">การลงทุนในข้อมูลและโครงสร้างพื้นฐาน:</strong> ให้ความสำคัญกับคุณภาพข้อมูลและปรับปรุง IT ให้ทันสมัย</li>
+                <li><strong class="text-primary-blue">การพัฒนาบุคลากร:</strong> ลงทุนในการฝึกอบรมและยกระดับทักษะที่เกี่ยวข้องกับ AI</li>
+                <li><strong class="text-primary-blue">การจัดการความเสี่ยงและจริยธรรม:</strong> กำหนดแนวทางปฏิบัติที่ชัดเจนและมาตรการความปลอดภัย</li>
+                <li><strong class="text-primary-blue">เริ่มต้นด้วยโครงการนำร่อง:</strong> ทดสอบและเรียนรู้จากโครงการขนาดเล็กก่อนขยายผล</li>
+            </ul>
+        </section>
+
+        <section class="mb-12">
+            <h2 class="text-3xl font-semibold section-title">7. ถาม AI เกี่ยวกับ AI ใน IT</h2>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <p class="text-lg mb-4 leading-relaxed">คุณมีคำถามเกี่ยวกับ AI ใน IT หรือไม่? พิมพ์คำถามของคุณด้านล่าง แล้วให้ AI ช่วยตอบ!</p>
+                <textarea id="aiQuestionInput" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary-blue focus:border-primary-blue mb-4 kanit" rows="4" placeholder="เช่น: AI จะช่วยลดต้นทุนในองค์กรได้อย่างไร?"></textarea>
+                <button id="askAiBtn" class="bg-primary-blue text-white px-6 py-3 rounded-lg shadow-md hover:bg-secondary-blue transition duration-300">
+                    ✨ ถาม AI ✨
+                    <span id="askAiLoading" class="loading-spinner hidden"></span>
+                </button>
+                <div id="aiResponseOutput" class="mt-4 p-4 bg-accent2-blue rounded-lg shadow-inner text-left text-gray-700 hidden"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center p-6 mt-12">
+        <p>&copy; 2025 อินโฟกราฟิกการประยุกต์ใช้ AI ใน IT</p>
+        <p class="text-sm text-gray-400 mt-1">สร้างขึ้นจากรายงานการวิจัยเชิงลึก</p>
+    </footer>
+
+    <script>
+        const processLabel = (label, maxLength = 16) => {
+            if (typeof label !== 'string' || label.length <= maxLength) {
+                return label;
+            }
+            const words = label.split(' ');
+            const lines = [];
+            let currentLine = '';
+            for (const word of words) {
+                if ((currentLine + word).length > maxLength && currentLine.length > 0) {
+                    lines.push(currentLine.trim());
+                    currentLine = word + ' ';
+                } else {
+                    currentLine += word + ' ';
+                }
+            }
+            if (currentLine.trim().length > 0) {
+                lines.push(currentLine.trim());
+            }
+            return lines.length > 0 ? lines : [label];
+        };
+
+        const tooltipTitleCallback = (tooltipItems) => {
+            const item = tooltipItems[0];
+            if (!item) return '';
+            let label = item.chart.data.labels[item.dataIndex];
+            if (Array.isArray(label)) {
+                return label.join(' ');
+            }
+            return label;
+        };
+
+        // Chart 1: Necessity of AI
+        const necessityCtx = document.getElementById('necessityChart').getContext('2d');
+        new Chart(necessityCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [processLabel('ผู้นำธุรกิจเชื่อว่า AIจำเป็นใน 5 ปีข้างหน้า'), processLabel('อื่นๆ')],
+                datasets: [{
+                    label: 'ความจำเป็นของ AI',
+                    data: [94, 6],
+                    backgroundColor: ['#007BFF', '#E0F7FA'],
+                    borderColor: ['#FFFFFF', '#FFFFFF'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, position: 'bottom', labels: {font: { family: 'Kanit'}}},
+                    tooltip: {
+                        callbacks: { title: tooltipTitleCallback },
+                        bodyFont: { family: 'Kanit' },
+                        titleFont: { family: 'Kanit' }
+                    },
+                    title: { display: false }
+                },
+                cutout: '70%'
+            }
+        });
+        
+        // Chart 2: AIOps Benefit Example (Illustrative)
+        const aiopsCtx = document.getElementById('aiopsBenefitChart').getContext('2d');
+        new Chart(aiopsCtx, {
+            type: 'bar',
+            data: {
+                labels: [processLabel('เวลาก่อนใช้ AIOps (สัปดาห์)'), processLabel('เวลาหลังใช้ AIOps (ชั่วโมง)')],
+                datasets: [{
+                    label: 'การลดเวลาแก้ไขปัญหา IT ของ Electrolux',
+                    data: [3 * 7 * 24, 1], // 3 weeks in hours vs 1 hour
+                    backgroundColor: ['#17A2B8', '#00BFFF'],
+                    borderColor: ['#17A2B8', '#00BFFF'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'ชั่วโมง', font: { family: 'Kanit' } },
+                        ticks: { font: { family: 'Kanit' } }
+                    },
+                    x: {
+                        ticks: { font: { family: 'Kanit' } }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: { title: tooltipTitleCallback },
+                         bodyFont: { family: 'Kanit' },
+                        titleFont: { family: 'Kanit' }
+                    },
+                    title: { display: true, text: 'ตัวอย่างประโยชน์ AIOps: Electrolux', font: { family: 'Kanit', size: 14 }, color: '#212529' }
+                }
+            }
+        });
+
+        // Gemini API Integration
+        const summarizeTrendsBtn = document.getElementById('summarizeTrendsBtn');
+        const summarizeLoading = document.getElementById('summarizeLoading');
+        const summaryOutput = document.getElementById('summaryOutput');
+        const futureTrendsContent = document.getElementById('futureTrendsContent');
+
+        const askAiBtn = document.getElementById('askAiBtn');
+        const askAiLoading = document.getElementById('askAiLoading');
+        const aiQuestionInput = document.getElementById('aiQuestionInput');
+        const aiResponseOutput = document.getElementById('aiResponseOutput');
+
+        async function callGeminiAPI(prompt, outputElement, loadingElement) {
+            loadingElement.classList.remove('hidden');
+            outputElement.classList.add('hidden');
+            outputElement.innerHTML = '';
+
+            try {
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = { contents: chatHistory };
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    outputElement.innerHTML = text.replace(/\n/g, '<br>'); // Replace newlines with <br> for HTML display
+                    outputElement.classList.remove('hidden');
+                } else {
+                    outputElement.innerHTML = 'ไม่สามารถสร้างคำตอบได้ในขณะนี้ โปรดลองอีกครั้ง';
+                    outputElement.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error calling Gemini API:', error);
+                outputElement.innerHTML = 'เกิดข้อผิดพลาดในการเชื่อมต่อกับ AI โปรดลองอีกครั้ง';
+                outputElement.classList.remove('hidden');
+            } finally {
+                loadingElement.classList.add('hidden');
+            }
+        }
+
+        summarizeTrendsBtn.addEventListener('click', () => {
+            const trendsText = Array.from(futureTrendsContent.querySelectorAll('.trend-card p'))
+                                .map(p => p.textContent.trim())
+                                .join('\n\n');
+            const prompt = `สรุปแนวโน้มในอนาคตของ AI ใน IT ต่อไปนี้ให้กระชับเป็นภาษาไทย:\n\n${trendsText}`;
+            callGeminiAPI(prompt, summaryOutput, summarizeLoading);
+        });
+
+        askAiBtn.addEventListener('click', () => {
+            const question = aiQuestionInput.value.trim();
+            if (question) {
+                const prompt = `ตอบคำถามต่อไปนี้เกี่ยวกับ AI ใน IT เป็นภาษาไทย โดยอิงตามความรู้ทั่วไปและแนวโน้มอุตสาหกรรม:\n\nคำถาม: ${question}`;
+                callGeminiAPI(prompt, aiResponseOutput, askAiLoading);
+            } else {
+                aiResponseOutput.innerHTML = 'กรุณาพิมพ์คำถามของคุณก่อน';
+                aiResponseOutput.classList.remove('hidden');
+            }
+        });
+
+    </script>
+
+</body>
+</html>
