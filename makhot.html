@@ -1,182 +1,583 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a/checkers.html b/checkers.html
-new file mode 100644
-index 0000000..a975ab3
---- /dev/null
-+++ b/checkers.html
-@@ -0,0 +1,172 @@
-+<!DOCTYPE html>
-+<html lang="th">
-+<head>
-+    <meta charset="UTF-8">
-+    <title>เกมหมากฮอต</title>
-+    <style>
-+        body {
-+            font-family: Arial, sans-serif;
-+            display: flex;
-+            justify-content: center;
-+            align-items: center;
-+            height: 100vh;
-+            background-color: #fafafa;
-+        }
-+        #board {
-+            display: grid;
-+            grid-template-columns: repeat(8, 60px);
-+            grid-template-rows: repeat(8, 60px);
-+        }
-+        .cell {
-+            width: 60px;
-+            height: 60px;
-+        }
-+        .dark { background-color: #769656; }
-+        .light { background-color: #eeeed2; }
-+        .piece {
-+            width: 50px;
-+            height: 50px;
-+            border-radius: 50%;
-+            margin: 5px;
-+        }
-+        .red { background-color: #d33; }
-+        .black { background-color: #333; }
-+        .highlight { outline: 3px solid yellow; }
-+        .king::after {
-+            content: 'K';
-+            color: white;
-+            font-weight: bold;
-+            position: absolute;
-+            top: 18px;
-+            left: 23px;
-+        }
-+        .piece-container {
-+            position: relative;
-+            width: 100%;
-+            height: 100%;
-+        }
-+    </style>
-+</head>
-+<body>
-+<div id="board"></div>
-+<script>
-+    const boardEl = document.getElementById('board');
-+    const board = [];
-+    let selected = null;
-+    let currentPlayer = 1; // 1 = red, -1 = black
-+
-+    function addPiece(cell, color, king = false) {
-+        const wrapper = document.createElement('div');
-+        wrapper.classList.add('piece-container');
-+        const piece = document.createElement('div');
-+        piece.classList.add('piece', color);
-+        if (king) piece.classList.add('king');
-+        wrapper.appendChild(piece);
-+        cell.appendChild(wrapper);
-+    }
-+
-+    function movePiece(sr, sc, dr, dc) {
-+        const piece = board[sr][sc];
-+        board[sr][sc] = 0;
-+        const srcCell = boardEl.children[sr * 8 + sc];
-+        srcCell.innerHTML = '';
-+        const destCell = boardEl.children[dr * 8 + dc];
-+        destCell.innerHTML = '';
-+        addPiece(destCell, piece > 0 ? 'red' : 'black', Math.abs(piece) === 2);
-+        board[dr][dc] = piece;
-+
-+        if (Math.abs(dr - sr) === 2) {
-+            const capR = (sr + dr) / 2;
-+            const capC = (sc + dc) / 2;
-+            board[capR][capC] = 0;
-+            boardEl.children[capR * 8 + capC].innerHTML = '';
-+        }
-+
-+        if (piece === 1 && dr === 0) {
-+            destCell.querySelector('.piece').classList.add('king');
-+            board[dr][dc] = 2;
-+        }
-+        if (piece === -1 && dr === 7) {
-+            destCell.querySelector('.piece').classList.add('king');
-+            board[dr][dc] = -2;
-+        }
-+    }
-+
-+    function clearHighlights() {
-+        document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
-+    }
-+
-+    function showMoves(r, c) {
-+        clearHighlights();
-+        const piece = board[r][c];
-+        const dirs = [];
-+        if (piece > 0 || Math.abs(piece) === 2) dirs.push([-1, -1], [-1, 1]);
-+        if (piece < 0 || Math.abs(piece) === 2) dirs.push([1, -1], [1, 1]);
-+        for (const [dr, dc] of dirs) {
-+            const nr = r + dr;
-+            const nc = c + dc;
-+            if (nr < 0 || nr > 7 || nc < 0 || nc > 7) continue;
-+            if (board[nr][nc] === 0) {
-+                boardEl.children[nr * 8 + nc].classList.add('highlight');
-+            } else if (Math.sign(board[nr][nc]) === -currentPlayer) {
-+                const jr = nr + dr;
-+                const jc = nc + dc;
-+                if (jr >= 0 && jr < 8 && jc >= 0 && jc < 8 && board[jr][jc] === 0) {
-+                    boardEl.children[jr * 8 + jc].classList.add('highlight');
-+                }
-+            }
-+        }
-+    }
-+
-+    function cellClick(e) {
-+        const row = parseInt(this.dataset.row);
-+        const col = parseInt(this.dataset.col);
-+        if (selected) {
-+            if (this.classList.contains('highlight')) {
-+                movePiece(selected.row, selected.col, row, col);
-+                clearHighlights();
-+                selected = null;
-+                currentPlayer *= -1;
-+            } else if (board[row][col] !== 0 && Math.sign(board[row][col]) === currentPlayer) {
-+                selected = { row, col };
-+                showMoves(row, col);
-+            } else {
-+                clearHighlights();
-+                selected = null;
-+            }
-+        } else if (board[row][col] !== 0 && Math.sign(board[row][col]) === currentPlayer) {
-+            selected = { row, col };
-+            showMoves(row, col);
-+        }
-+    }
-+
-+    function init() {
-+        for (let r = 0; r < 8; r++) {
-+            board[r] = [];
-+            for (let c = 0; c < 8; c++) {
-+                const cell = document.createElement('div');
-+                cell.classList.add('cell');
-+                if ((r + c) % 2 === 0) cell.classList.add('light');
-+                else cell.classList.add('dark');
-+                cell.dataset.row = r;
-+                cell.dataset.col = c;
-+                cell.addEventListener('click', cellClick);
-+                boardEl.appendChild(cell);
-+
-+                if (r < 3 && (r + c) % 2 === 1) {
-+                    board[r][c] = -1;
-+                    addPiece(cell, 'black');
-+                } else if (r > 4 && (r + c) % 2 === 1) {
-+                    board[r][c] = 1;
-+                    addPiece(cell, 'red');
-+                } else {
-+                    board[r][c] = 0;
-+                }
-+            }
-+        }
-+    }
-+
-+    init();
-+</script>
-+</body>
-+</html>
- 
-EOF
-)
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YDM THAILAND - Digital Agency</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Custom font for the entire page */
+        body {
+            font-family: "Inter", sans-serif;
+            scroll-behavior: smooth; /* Smooth scrolling for anchor links */
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Animation for fade-in-up */
+        @keyframes fadeInMoveUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fadeInMoveUp 0.8s ease-out forwards;
+        }
+        .animate-fade-in-up.delay-200 {
+            animation-delay: 0.2s;
+        }
+        .animate-fade-in-up.delay-400 {
+            animation-delay: 0.4s;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <nav class="bg-white shadow-lg fixed w-full z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold text-blue-700 rounded-md p-2 hover:bg-blue-50 transition duration-300">YDM THAILAND</a>
+
+            <div class="md:hidden">
+                <button id="mobile-menu-button" class="text-gray-600 focus:outline-none focus:text-gray-900">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <ul class="hidden md:flex space-x-6">
+                <li><a href="#home" class="text-gray-600 hover:text-blue-700 transition duration-300 px-3 py-2 rounded-md hover:bg-blue-50">หน้าแรก</a></li>
+                <li><a href="#about" class="text-gray-600 hover:text-blue-700 transition duration-300 px-3 py-2 rounded-md hover:bg-blue-50">เกี่ยวกับเรา</a></li>
+                <li><a href="#services" class="text-gray-600 hover:text-blue-700 transition duration-300 px-3 py-2 rounded-md hover:bg-blue-50">บริการของเรา</a></li>
+                <li><a href="#works" class="text-gray-600 hover:text-blue-700 transition duration-300 px-3 py-2 rounded-md hover:bg-blue-50">ผลงาน</a></li>
+                <li><a href="#blog" class="text-gray-600 hover:text-blue-700 transition duration-300 px-3 py-2 rounded-md hover:bg-blue-50">บทความ</a></li>
+                <li><a href="#contact" class="text-gray-600 hover:text-blue-700 transition duration-300 px-3 py-2 rounded-md hover:bg-blue-50">ติดต่อเรา</a></li>
+            </ul>
+        </div>
+
+        <div id="mobile-menu" class="hidden md:hidden bg-white py-2">
+            <ul class="flex flex-col items-center space-y-2">
+                <li><a href="#home" class="block text-gray-600 hover:text-blue-700 transition duration-300 px-4 py-2 rounded-md hover:bg-blue-50 w-full text-center">หน้าแรก</a></li>
+                <li><a href="#about" class="block text-gray-600 hover:text-blue-700 transition duration-300 px-4 py-2 rounded-md hover:bg-blue-50 w-full text-center">เกี่ยวกับเรา</a></li>
+                <li><a href="#services" class="block text-gray-600 hover:text-blue-700 transition duration-300 px-4 py-2 rounded-md hover:bg-blue-50 w-full text-center">บริการของเรา</a></li>
+                <li><a href="#works" class="block text-gray-600 hover:text-blue-700 transition duration-300 px-4 py-2 rounded-md hover:bg-blue-50 w-full text-center">ผลงาน</a></li>
+                <li><a href="#blog" class="block text-gray-600 hover:text-blue-700 transition duration-300 px-4 py-2 rounded-md hover:bg-blue-50 w-full text-center">บทความ</a></li>
+                <li><a href="#contact" class="block text-gray-600 hover:text-blue-700 transition duration-300 px-4 py-2 rounded-md hover:bg-blue-50 w-full text-center">ติดต่อเรา</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section id="home" class="relative bg-gradient-to-r from-blue-700 to-purple-600 text-white flex items-center justify-center min-h-screen pt-20">
+        <div class="absolute inset-0 bg-black opacity-50"></div>
+        <img src="https://placehold.co/1920x1080/0A2342/FFFFFF?text=Digital+Innovation" alt="Digital Innovation Background" class="absolute inset-0 w-full h-full object-cover z-0">
+
+        <div class="container mx-auto px-4 py-16 text-center relative z-10">
+            <h1 class="text-4xl md:text-6xl font-extrabold leading-tight mb-6 animate-fade-in-up">
+                ขับเคลื่อนธุรกิจของคุณ<br>สู่ความสำเร็จในโลกดิจิทัล
+            </h1>
+            <p class="text-lg md:text-xl mb-8 max-w-3xl mx-auto animate-fade-in-up delay-200">
+                YDM THAILAND คือ Digital Agency ชั้นนำ ที่พร้อมสร้างสรรค์กลยุทธ์และโซลูชั่นดิจิทัลครบวงจรเพื่อการเติบโตอย่างยั่งยืน
+            </p>
+            <a href="#services" class="inline-block bg-white text-blue-700 font-bold py-3 px-8 rounded-full shadow-lg hover:bg-gray-100 transform hover:scale-105 transition duration-300 animate-fade-in-up delay-400">
+                สำรวจบริการของเรา <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+    </section>
+
+    <section id="intro" class="py-16 bg-white">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-8">YDM THAILAND คือใคร?</h2>
+            <p class="text-lg text-gray-700 max-w-4xl mx-auto leading-relaxed">
+                เราคือทีมผู้เชี่ยวชาญด้านดิจิทัลมาร์เก็ตติ้งที่มีประสบการณ์ยาวนาน พร้อมด้วยความเข้าใจอย่างลึกซึ้งในตลาดประเทศไทยและภูมิภาคเอเชียตะวันออกเฉียงใต้
+                เรามุ่งมั่นที่จะเป็นพันธมิตรทางธุรกิจที่ช่วยให้แบรนด์ของคุณโดดเด่นและเข้าถึงกลุ่มเป้าหมายได้อย่างมีประสิทธิภาพ
+                ด้วยนวัตกรรมและเทคโนโลยีที่ทันสมัย เราพร้อมนำเสนอโซลูชั่นที่ตอบโจทย์ความท้าทายทางธุรกิจของคุณ
+            </p>
+        </div>
+    </section>
+
+    <section id="services-overview" class="py-16 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">บริการหลักของเรา</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition duration-300">
+                    <div class="text-5xl text-blue-600 mb-6 text-center"><i class="fas fa-chart-line"></i></div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 text-center">Search Engine Marketing (SEO & SEM)</h3>
+                    <p class="text-gray-700 text-center">เพิ่มการมองเห็นและจัดอันดับเว็บไซต์ของคุณบน Search Engine ด้วยกลยุทธ์ที่แม่นยำ</p>
+                </div>
+                <div class="bg-white p-8 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition duration-300">
+                    <div class="text-5xl text-red-500 mb-6 text-center"><i class="fas fa-share-alt"></i></div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 text-center">Social Media Marketing</h3>
+                    <p class="text-gray-700 text-center">สร้างการมีส่วนร่วมและขยายฐานลูกค้าบนแพลตฟอร์มโซเชียลมีเดียยอดนิยม</p>
+                </div>
+                <div class="bg-white p-8 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition duration-300">
+                    <div class="text-5xl text-green-600 mb-6 text-center"><i class="fas fa-pencil-alt"></i></div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 text-center">Content Marketing</h3>
+                    <p class="text-gray-700 text-center">สร้างสรรค์เนื้อหาที่มีคุณค่า ดึงดูด และสร้างความผูกพันกับกลุ่มเป้าหมาย</p>
+                </div>
+                <div class="bg-white p-8 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition duration-300">
+                    <div class="text-5xl text-purple-600 mb-6 text-center"><i class="fas fa-laptop-code"></i></div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 text-center">Web Development & Design</h3>
+                    <p class="text-gray-700 text-center">ออกแบบและพัฒนาเว็บไซต์ที่ทันสมัย ใช้งานง่าย และตอบโจทย์ธุรกิจของคุณ</p>
+                </div>
+                <div class="bg-white p-8 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition duration-300">
+                    <div class="text-5xl text-orange-500 mb-6 text-center"><i class="fas fa-database"></i></div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 text-center">Data Analytics</h3>
+                    <p class="text-gray-700 text-center">วิเคราะห์ข้อมูลเชิงลึกเพื่อปรับปรุงกลยุทธ์และเพิ่มประสิทธิภาพแคมเปญ</p>
+                </div>
+                <div class="bg-white p-8 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition duration-300">
+                    <div class="text-5xl text-teal-600 mb-6 text-center"><i class="fas fa-tachometer-alt"></i></div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 text-center">Performance Marketing</h3>
+                    <p class="text-gray-700 text-center">มุ่งเน้นผลลัพธ์ที่วัดผลได้ เพื่อเพิ่ม ROI ให้กับการลงทุนด้านการตลาดของคุณ</p>
+                </div>
+            </div>
+            <div class="text-center mt-12">
+                <a href="#services" class="inline-block bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-blue-800 transform hover:scale-105 transition duration-300">
+                    ดูบริการทั้งหมด <i class="fas fa-chevron-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section id="clients" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">ลูกค้าของเรา</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 items-center justify-items-center mb-12">
+                <img src="https://placehold.co/150x80/E0E0E0/333333?text=Client+A" alt="Client Logo A" class="w-32 h-auto opacity-75 hover:opacity-100 transition duration-300 rounded-md">
+                <img src="https://placehold.co/150x80/E0E0E0/333333?text=Client+B" alt="Client Logo B" class="w-32 h-auto opacity-75 hover:opacity-100 transition duration-300 rounded-md">
+                <img src="https://placehold.co/150x80/E0E0E0/333333?text=Client+C" alt="Client Logo C" class="w-32 h-auto opacity-75 hover:opacity-100 transition duration-300 rounded-md">
+                <img src="https://placehold.co/150x80/E0E0E0/333333?text=Client+D" alt="Client Logo D" class="w-32 h-auto opacity-75 hover:opacity-100 transition duration-300 rounded-md">
+                <img src="https://placehold.co/150x80/E0E0E0/333333?text=Client+E" alt="Client Logo E" class="w-32 h-auto opacity-75 hover:opacity-100 transition duration-300 rounded-md">
+            </div>
+
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">สิ่งที่ลูกค้าพูดถึงเรา</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-gray-50 p-8 rounded-lg shadow-md border-l-4 border-blue-600">
+                    <p class="text-gray-700 italic mb-4">"YDM THAILAND ช่วยให้ธุรกิจของเราเติบโตอย่างก้าวกระโดดในโลกออนไลน์ ทีมงานมีความเป็นมืออาชีพและเข้าใจความต้องการของเราอย่างแท้จริง!"</p>
+                    <p class="font-semibold text-gray-900">- คุณสมชาย ใจดี, CEO บริษัท XYZ</p>
+                </div>
+                <div class="bg-gray-50 p-8 rounded-lg shadow-md border-l-4 border-purple-600">
+                    <p class="text-gray-700 italic mb-4">"ประทับใจในผลลัพธ์ที่ YDM ส่งมอบให้ แคมเปญการตลาดดิจิทัลของเราประสบความสำเร็จเกินคาดหมาย ขอแนะนำอย่างยิ่ง!"</p>
+                    <p class="font-semibold text-gray-900">- คุณสมหญิง รุ่งเรือง, Marketing Director บริษัท ABC</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="py-16 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">เกี่ยวกับเรา</h2>
+            <div class="flex flex-col lg:flex-row items-center gap-12">
+                <div class="lg:w-1/2">
+                    <img src="https://placehold.co/800x500/4F46E5/FFFFFF?text=Our+Team" alt="Our Team" class="rounded-lg shadow-xl w-full h-auto object-cover">
+                </div>
+                <div class="lg:w-1/2 text-center lg:text-left">
+                    <h3 class="text-2xl font-semibold text-gray-900 mb-4">เรื่องราวและวิสัยทัศน์ของเรา</h3>
+                    <p class="text-gray-700 leading-relaxed mb-6">
+                        YDM THAILAND ก่อตั้งขึ้นด้วยความมุ่งมั่นที่จะเป็นผู้นำในการขับเคลื่อนธุรกิจสู่ยุคดิจิทัล
+                        เราเชื่อว่าทุกแบรนด์มีศักยภาพในการเติบโตในโลกออนไลน์ และเราพร้อมที่จะเป็นส่วนหนึ่งในการสร้างสรรค์โอกาสเหล่านั้น
+                        วิสัยทัศน์ของเราคือการเป็น Digital Agency ที่สร้างคุณค่าสูงสุดให้กับลูกค้า ด้วยนวัตกรรม, ความเชี่ยวชาญ
+                        และผลลัพธ์ที่จับต้องได้
+                    </p>
+                    <h3 class="text-2xl font-semibold text-gray-900 mb-4">ทำไมต้องเลือก YDM THAILAND?</h3>
+                    <ul class="text-gray-700 list-disc list-inside space-y-2">
+                        <li><i class="fas fa-check-circle text-blue-600 mr-2"></i> ทีมงานผู้เชี่ยวชาญและมีประสบการณ์สูง</li>
+                        <li><i class="fas fa-check-circle text-blue-600 mr-2"></i> กลยุทธ์ที่ปรับให้เหมาะสมกับแต่ละธุรกิจ</li>
+                        <li><i class="fas fa-check-circle text-blue-600 mr-2"></i> เน้นผลลัพธ์ที่วัดผลได้และ ROI</li>
+                        <li><i class="fas fa-check-circle text-blue-600 mr-2"></i> เทคโนโลยีและเครื่องมือที่ทันสมัย</li>
+                        <li><i class="fas fa-check-circle text-blue-600 mr-2"></i> บริการที่ครบวงจรและเป็นมิตร</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="services" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">บริการของเราอย่างละเอียด</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                <div class="bg-gray-50 p-8 rounded-lg shadow-md border-t-4 border-blue-600 hover:shadow-xl transition duration-300">
+                    <h3 class="text-2xl font-semibold text-gray-900 mb-4 flex items-center"><i class="fas fa-search text-blue-600 mr-3"></i> SEO & SEM</h3>
+                    <p class="text-gray-700 mb-4">
+                        เราช่วยให้เว็บไซต์ของคุณติดอันดับต้นๆ บน Google และ Search Engine อื่นๆ ด้วยกลยุทธ์ SEO ที่แข็งแกร่ง
+                        และการจัดการแคมเปญ SEM (Google Ads) ที่มีประสิทธิภาพ เพื่อเพิ่ม Traffic และ Conversion
+                    </p>
+                    <a href="#" class="text-blue-600 hover:underline font-medium">เรียนรู้เพิ่มเติม <i class="fas fa-arrow-right ml-1 text-sm"></i></a>
+                </div>
+                <div class="bg-gray-50 p-8 rounded-lg shadow-md border-t-4 border-purple-600 hover:shadow-xl transition duration-300">
+                    <h3 class="text-2xl font-semibold text-gray-900 mb-4 flex items-center"><i class="fas fa-users text-purple-600 mr-3"></i> Social Media Marketing</h3>
+                    <p class="text-gray-700 mb-4">
+                        สร้างแบรนด์ของคุณให้เป็นที่รู้จักและมีปฏิสัมพันธ์กับลูกค้าบนแพลตฟอร์มโซเชียลมีเดีย
+                        ไม่ว่าจะเป็น Facebook, Instagram, TikTok หรือ Line เรามีกลยุทธ์ที่เหมาะสมกับทุกช่องทาง
+                    </p>
+                    <a href="#" class="text-purple-600 hover:underline font-medium">เรียนรู้เพิ่มเติม <i class="fas fa-arrow-right ml-1 text-sm"></i></a>
+                </div>
+                <div class="bg-gray-50 p-8 rounded-lg shadow-md border-t-4 border-green-600 hover:shadow-xl transition duration-300">
+                    <h3 class="text-2xl font-semibold text-gray-900 mb-4 flex items-center"><i class="fas fa-pen-nib text-green-600 mr-3"></i> Content Marketing</h3>
+                    <p class="text-gray-700 mb-4">
+                        เราสร้างสรรค์เนื้อหาที่น่าสนใจและมีคุณค่า ทั้งบทความ, วิดีโอ, Infographic และอื่นๆ
+                        เพื่อให้แบรนด์ของคุณเป็นที่น่าจดจำและสร้างความผูกพันกับกลุ่มเป้าหมาย
+                    </p>
+                    <a href="#" class="text-green-600 hover:underline font-medium">เรียนรู้เพิ่มเติม <i class="fas fa-arrow-right ml-1 text-sm"></i></a>
+                </div>
+                <div class="bg-gray-50 p-8 rounded-lg shadow-md border-t-4 border-orange-600 hover:shadow-xl transition duration-300">
+                    <h3 class="text-2xl font-semibold text-gray-900 mb-4 flex items-center"><i class="fas fa-code text-orange-600 mr-3"></i> Web Development & Design</h3>
+                    <p class="text-gray-700 mb-4">
+                        เราออกแบบและพัฒนาเว็บไซต์ที่ทันสมัย ใช้งานง่าย และรองรับทุกอุปกรณ์
+                        ไม่ว่าจะเป็นเว็บไซต์บริษัท, E-commerce หรือ Landing Page เราสร้างสรรค์ให้ตอบโจทย์ธุรกิจของคุณ
+                    </p>
+                    <a href="#" class="text-orange-600 hover:underline font-medium">เรียนรู้เพิ่มเติม <i class="fas fa-arrow-right ml-1 text-sm"></i></a>
+                </div>
+                <div class="bg-gray-50 p-8 rounded-lg shadow-md border-t-4 border-teal-600 hover:shadow-xl transition duration-300">
+                    <h3 class="text-2xl font-semibold text-gray-900 mb-4 flex items-center"><i class="fas fa-chart-pie text-teal-600 mr-3"></i> Data Analytics & Reporting</h3>
+                    <p class="text-gray-700 mb-4">
+                        เราช่วยวิเคราะห์ข้อมูลเชิงลึกจากแคมเปญและเว็บไซต์ของคุณ เพื่อให้คุณเข้าใจพฤติกรรมลูกค้า
+                        และนำข้อมูลไปปรับปรุงกลยุทธ์การตลาดให้มีประสิทธิภาพสูงสุด
+                    </p>
+                    <a href="#" class="text-teal-600 hover:underline font-medium">เรียนรู้เพิ่มเติม <i class="fas fa-arrow-right ml-1 text-sm"></i></a>
+                </div>
+                <div class="bg-gray-50 p-8 rounded-lg shadow-md border-t-4 border-red-600 hover:shadow-xl transition duration-300">
+                    <h3 class="text-2xl font-semibold text-gray-900 mb-4 flex items-center"><i class="fas fa-bullhorn text-red-600 mr-3"></i> Performance Marketing</h3>
+                    <p class="text-gray-700 mb-4">
+                        เรามุ่งเน้นการสร้างแคมเปญที่วัดผลได้จริง ไม่ว่าจะเป็น Google Ads, Facebook Ads หรืออื่นๆ
+                        เพื่อให้แน่ใจว่าทุกการลงทุนของคุณจะนำมาซึ่งผลตอบแทนที่คุ้มค่า
+                    </p>
+                    <a href="#" class="text-red-600 hover:underline font-medium">เรียนรู้เพิ่มเติม <i class="fas fa-arrow-right ml-1 text-sm"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="works" class="py-16 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">ผลงานล่าสุดของเรา</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transform hover:-translate-y-2 transition duration-300">
+                    <img src="https://placehold.co/600x400/3B82F6/FFFFFF?text=Project+A" alt="Project A" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">แคมเปญการตลาดสำหรับ E-commerce</h3>
+                        <p class="text-gray-700 text-sm mb-4">เพิ่มยอดขาย 30% ด้วยกลยุทธ์ SEM และ Social Media Ads</p>
+                        <a href="#" class="text-blue-600 hover:underline font-medium">ดู Case Study <i class="fas fa-external-link-alt ml-1 text-sm"></i></a>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transform hover:-translate-y-2 transition duration-300">
+                    <img src="https://placehold.co/600x400/8B5CF6/FFFFFF?text=Project+B" alt="Project B" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">พัฒนาเว็บไซต์องค์กรใหม่</h3>
+                        <p class="text-gray-700 text-sm mb-4">ออกแบบและพัฒนาเว็บไซต์ที่ทันสมัย พร้อมระบบ SEO ที่แข็งแกร่ง</p>
+                        <a href="#" class="text-purple-600 hover:underline font-medium">ดู Case Study <i class="fas fa-external-link-alt ml-1 text-sm"></i></a>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transform hover:-translate-y-2 transition duration-300">
+                    <img src="https://placehold.co/600x400/10B981/FFFFFF?text=Project+C" alt="Project C" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">กลยุทธ์ Content Marketing สำหรับธุรกิจบริการ</h3>
+                        <p class="text-gray-700 text-sm mb-4">สร้าง Brand Awareness และ Lead Generation ผ่านเนื้อหาคุณภาพ</p>
+                        <a href="#" class="text-green-600 hover:underline font-medium">ดู Case Study <i class="fas fa-external-link-alt ml-1 text-sm"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-12">
+                <a href="#" class="inline-block bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-blue-800 transform hover:scale-105 transition duration-300">
+                    ดูผลงานทั้งหมด <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section id="blog" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">บทความและ Insights</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transform hover:-translate-y-2 transition duration-300">
+                    <img src="https://placehold.co/600x300/FACC15/333333?text=Digital+Trends" alt="Digital Trends" class="w-full h-40 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">เทรนด์ Digital Marketing ปี 2024 ที่คุณต้องรู้</h3>
+                        <p class="text-gray-700 text-sm mb-4">อัปเดตเทรนด์ล่าสุดที่จะช่วยให้ธุรกิจของคุณก้าวทันโลกดิจิทัล</p>
+                        <span class="text-xs text-gray-500">20 พฤษภาคม 2568</span>
+                        <a href="#" class="block text-blue-600 hover:underline font-medium mt-3">อ่านเพิ่มเติม <i class="fas fa-arrow-right ml-1 text-sm"></i></a>
+                    </div>
+                </div>
+                <div class="bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transform hover:-translate-y-2 transition duration-300">
+                    <img src="https://placehold.co/600x300/60A5FA/333333?text=SEO+Tips" alt="SEO Tips" class="w-full h-40 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">5 เคล็ดลับ SEO ที่ช่วยเพิ่ม Traffic เว็บไซต์</h3>
+                        <p class="text-gray-700 text-sm mb-4">เทคนิคสำคัญในการปรับปรุง SEO เพื่อการจัดอันดับที่ดีขึ้น</p>
+                        <span class="text-xs text-gray-500">15 พฤษภาคม 2568</span>
+                        <a href="#" class="block text-blue-600 hover:underline font-medium mt-3">อ่านเพิ่มเติม <i class="fas fa-arrow-right ml-1 text-sm"></i></a>
+                    </div>
+                </div>
+                <div class="bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transform hover:-translate-y-2 transition duration-300">
+                    <img src="https://placehold.co/600x300/A78BFA/333333?text=Social+Media" alt="Social Media" class="w-full h-40 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">กลยุทธ์ Social Media Marketing สำหรับธุรกิจ SME</h3>
+                        <p class="text-gray-700 text-sm mb-4">สร้างการมีส่วนร่วมและยอดขายบนโซเชียลมีเดียสำหรับธุรกิจขนาดเล็ก</p>
+                        <span class="text-xs text-gray-500">10 พฤษภาคม 2568</span>
+                        <a href="#" class="block text-blue-600 hover:underline font-medium mt-3">อ่านเพิ่มเติม <i class="fas fa-arrow-right ml-1 text-sm"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-16 bg-white p-8 rounded-lg shadow-lg border-t-4 border-blue-600">
+                <h3 class="text-2xl font-semibold text-gray-900 mb-6 text-center flex items-center justify-center">
+                    <i class="fas fa-lightbulb text-yellow-500 mr-3"></i> สร้างไอเดียบทความ ✨
+                </h3>
+                <p class="text-gray-700 mb-6 text-center">
+                    ให้ Gemini AI ช่วยคุณสร้างไอเดียหัวข้อและโครงร่างบทความสำหรับบล็อกของคุณ
+                </p>
+                <div class="mb-4">
+                    <label for="blogTopic" class="block text-gray-700 text-sm font-bold mb-2">หัวข้อที่คุณสนใจ:</label>
+                    <textarea id="blogTopic" rows="3" class="shadow appearance-none border rounded-md w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="เช่น เทรนด์การตลาดดิจิทัล 2024, SEO สำหรับธุรกิจขนาดเล็ก"></textarea>
+                </div>
+                <div class="flex justify-center">
+                    <button id="generateBlogIdeaBtn" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transform hover:scale-105 transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-magic mr-2"></i> สร้างไอเดียบทความ
+                    </button>
+                </div>
+                <div id="loadingIndicator" class="hidden text-center mt-4 text-blue-600">
+                    <i class="fas fa-spinner fa-spin mr-2"></i> กำลังสร้างไอเดีย...
+                </div>
+            </div>
+
+            <div id="blogIdeaModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden p-4">
+                <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-8 relative max-h-[90vh] overflow-y-auto">
+                    <button id="closeBlogIdeaModalBtn" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900 text-2xl">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6 text-center">ไอเดียบทความของคุณ ✨</h3>
+                    <div id="generatedBlogContent" class="prose max-w-none text-gray-700 leading-relaxed">
+                        </div>
+                    <div class="mt-8 text-right">
+                        <button id="copyBlogContentBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-full shadow-md transform hover:scale-105 transition duration-300">
+                            <i class="fas fa-copy mr-2"></i> คัดลอก
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section id="contact" class="py-16 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">ติดต่อเรา</h2>
+            <div class="flex flex-col lg:flex-row gap-12">
+                <div class="lg:w-1/2 bg-white p-8 rounded-lg shadow-lg">
+                    <h3 class="text-2xl font-semibold text-gray-900 mb-6">ส่งข้อความถึงเรา</h3>
+                    <form action="#" method="POST">
+                        <div class="mb-4">
+                            <label for="name" class="block text-gray-700 text-sm font-bold mb-2">ชื่อของคุณ:</label>
+                            <input type="text" id="name" name="name" class="shadow appearance-none border rounded-md w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="ชื่อ-นามสกุล" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="email" class="block text-gray-700 text-sm font-bold mb-2">อีเมล:</label>
+                            <input type="email" id="email" name="email" class="shadow appearance-none border rounded-md w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="อีเมลของคุณ" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="subject" class="block text-gray-700 text-sm font-bold mb-2">หัวข้อ:</label>
+                            <input type="text" id="subject" name="subject" class="shadow appearance-none border rounded-md w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="หัวข้อที่คุณต้องการสอบถาม">
+                        </div>
+                        <div class="mb-6">
+                            <label for="message" class="block text-gray-700 text-sm font-bold mb-2">ข้อความ:</label>
+                            <textarea id="message" name="message" rows="6" class="shadow appearance-none border rounded-md w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="ข้อความของคุณ" required></textarea>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <button type="submit" class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:shadow-outline transform hover:scale-105 transition duration-300">
+                                ส่งข้อความ <i class="fas fa-paper-plane ml-2"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="lg:w-1/2 bg-white p-8 rounded-lg shadow-lg">
+                    <h3 class="text-2xl font-semibold text-gray-900 mb-6">ข้อมูลการติดต่อ</h3>
+                    <div class="space-y-4 mb-8">
+                        <p class="flex items-center text-gray-700"><i class="fas fa-map-marker-alt text-blue-600 mr-3 text-xl"></i>
+                            ที่อยู่: เลขที่ 123 ถนนดิจิทัล แขวงนวัตกรรม เขตสร้างสรรค์ กรุงเทพมหานคร 10000
+                        </p>
+                        <p class="flex items-center text-gray-700"><i class="fas fa-phone-alt text-blue-600 mr-3 text-xl"></i>
+                            โทรศัพท์: <a href="tel:+6621234567" class="hover:underline">+66 (0)2 123 4567</a>
+                        </p>
+                        <p class="flex items-center text-gray-700"><i class="fas fa-envelope text-blue-600 mr-3 text-xl"></i>
+                            อีเมล: <a href="mailto:info@ydmthailand.com" class="hover:underline">info@ydmthailand.com</a>
+                        </p>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-900 mb-6">แผนที่</h3>
+                    <div class="w-full h-64 bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center text-gray-500">
+                        <iframe
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3875.549298751509!2d100.5367807148301!3d13.74619799035544!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30e29ed010a3b2a1%3A0x20f3a6a9b0c2a7e7!2sBangkok%2C%20Thailand!5e0!3m2!1sen!2sth!4v1678912345678!5m2!1sen!2sth"
+                            width="100%"
+                            height="100%"
+                            style="border:0;"
+                            allowfullscreen=""
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 text-white py-10">
+        <div class="container mx-auto px-4 text-center">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                <a href="#" class="text-2xl font-bold text-blue-400 mb-4 md:mb-0">YDM THAILAND</a>
+
+                <ul class="flex flex-wrap justify-center space-x-6 mb-4 md:mb-0">
+                    <li><a href="#home" class="text-gray-400 hover:text-white transition duration-300">หน้าแรก</a></li>
+                    <li><a href="#about" class="text-gray-400 hover:text-white transition duration-300">เกี่ยวกับเรา</a></li>
+                    <li><a href="#services" class="text-gray-400 hover:text-white transition duration-300">บริการ</a></li>
+                    <li><a href="#works" class="text-gray-400 hover:text-white transition duration-300">ผลงาน</a></li>
+                    <li><a href="#blog" class="text-gray-400 hover:text-white transition duration-300">บทความ</a></li>
+                    <li><a href="#contact" class="text-gray-400 hover:text-white transition duration-300">ติดต่อ</a></li>
+                </ul>
+
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white transition duration-300 text-2xl"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition duration-300 text-2xl"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition duration-300 text-2xl"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition duration-300 text-2xl"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+            <p class="text-gray-500 text-sm">© 2024 YDM THAILAND. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // JavaScript for Mobile Menu Toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Close mobile menu when a link is clicked
+        const mobileMenuLinks = mobileMenu.querySelectorAll('a');
+        mobileMenuLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
+        });
+
+        // Simple animation for hero section elements (using Tailwind's built-in animate classes)
+        // These classes are already applied in the HTML, no extra JS needed for them.
+        // If more complex animations were needed, a JS library like AOS or custom Intersection Observer would be used.
+
+        // New: JavaScript for Blog Post Idea Generator (Gemini API Integration)
+        const blogTopicTextarea = document.getElementById('blogTopic');
+        const generateBlogIdeaBtn = document.getElementById('generateBlogIdeaBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const blogIdeaModal = document.getElementById('blogIdeaModal');
+        const closeBlogIdeaModalBtn = document.getElementById('closeBlogIdeaModalBtn');
+        const generatedBlogContent = document.getElementById('generatedBlogContent');
+        const copyBlogContentBtn = document.getElementById('copyBlogContentBtn');
+
+        // Event listener for the generate button
+        generateBlogIdeaBtn.addEventListener('click', async () => {
+            const topic = blogTopicTextarea.value.trim();
+            if (!topic) {
+                // Using alert for simplicity, consider a custom modal for production
+                alert('กรุณาป้อนหัวข้อที่คุณสนใจก่อน');
+                return;
+            }
+
+            // Show loading indicator and disable button
+            loadingIndicator.classList.remove('hidden');
+            generateBlogIdeaBtn.disabled = true;
+            generateBlogIdeaBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> กำลังสร้าง...';
+
+            try {
+                // Construct the prompt for the Gemini API in Thai
+                const prompt = `สร้างไอเดียหัวข้อบทความ 3 หัวข้อและโครงร่างโดยย่อสำหรับแต่ละหัวข้อ โดยเน้นที่หัวข้อ: "${topic}" โทนเสียงควรเป็นมืออาชีพและให้ข้อมูล เหมาะสำหรับบล็อกของ Digital Marketing Agency`;
+
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = { contents: chatHistory };
+                // The API key is automatically provided by the Canvas environment at runtime
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    generatedBlogContent.innerHTML = formatTextForDisplay(text); // Format text for HTML display
+                    blogIdeaModal.classList.remove('hidden'); // Show the modal
+                } else {
+                    generatedBlogContent.innerHTML = '<p class="text-red-600">ไม่สามารถสร้างไอเดียได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง</p>';
+                    blogIdeaModal.classList.remove('hidden'); // Show modal with error
+                }
+            } catch (error) {
+                console.error('Error calling Gemini API:', error);
+                generatedBlogContent.innerHTML = '<p class="text-red-600">เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง</p>';
+                blogIdeaModal.classList.remove('hidden'); // Show modal with error
+            } finally {
+                // Hide loading indicator and enable button
+                loadingIndicator.classList.add('hidden');
+                generateBlogIdeaBtn.disabled = false;
+                generateBlogIdeaBtn.innerHTML = '<i class="fas fa-magic mr-2"></i> สร้างไอเดียบทความ';
+            }
+        });
+
+        // Helper function to format text with newlines for HTML display
+        function formatTextForDisplay(text) {
+            // Replace markdown newlines with HTML breaks, and double newlines with paragraph breaks
+            return text.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+        }
+
+        // Event listener for closing the modal
+        closeBlogIdeaModalBtn.addEventListener('click', () => {
+            blogIdeaModal.classList.add('hidden');
+            generatedBlogContent.innerHTML = ''; // Clear content when closing
+        });
+
+        // Event listener for copying content to clipboard
+        copyBlogContentBtn.addEventListener('click', () => {
+            const textToCopy = generatedBlogContent.innerText;
+            // Use document.execCommand('copy') for better iframe compatibility
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = textToCopy;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            try {
+                document.execCommand('copy');
+                // Using alert for simplicity, consider a custom modal for production
+                alert('คัดลอกไอเดียบทความแล้ว!');
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                // Using alert for simplicity, consider a custom modal for production
+                alert('ไม่สามารถคัดลอกได้ กรุณาคัดลอกด้วยตนเอง');
+            } finally {
+                document.body.removeChild(tempTextArea);
+            }
+        });
+    </script>
+</body>
+</html>
